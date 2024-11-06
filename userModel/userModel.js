@@ -25,6 +25,7 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  profileImage: { type: String },
   messages: [{
     sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     receiver: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },

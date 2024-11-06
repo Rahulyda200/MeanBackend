@@ -16,12 +16,12 @@ userRouter.post('/login', userController.login);
 // userRouter.get('/chat/messages/:roomId', authMiddleware, chatRoomController.getMessagesForRoom);
 
 // Message routes
-userRouter.post('/messages', authMiddleware, userController.sendMessage); // Send a message
+userRouter.post('/messages', authMiddleware, userController.sendMessage); 
 userRouter.get('/messages', authMiddleware, userController.getMessages);
 
 userRouter.get('/', authMiddleware, userController.getAllUsers);
 
-
+    
 
 userRouter.get('/:id', userController.getUserById);
 

@@ -153,7 +153,6 @@ exports.deleteUser = async (req, res) => {
 };
 
 
-
 exports.sendMessage = async (req, res) => {
   try {
     const { receiverId, message } = req.body;
@@ -165,7 +164,7 @@ exports.sendMessage = async (req, res) => {
       message,
     };
 
-    console.log('New Message:', newMessage); // Add this line to check the message
+    console.log('New Message:', newMessage); 
 
     await User.updateOne({ _id: senderId }, { $push: { messages: newMessage } });
     await User.updateOne({ _id: receiverId }, { $push: { messages: newMessage } });
@@ -178,21 +177,29 @@ exports.sendMessage = async (req, res) => {
 
 exports.getMessages = async (req, res) => {
   try {
-    const userId = req.user._id; // Get user ID from token
+    const userId = req.user._id;
     const user = await User.findById(userId)
-      .populate('messages.sender')  // Ensure sender and receiver are properly populated
+      .populate('messages.sender')  
       .populate('messages.receiver');
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    console.log('Messages:', user.messages);  // Add this line to check the messages
+    const messages = user.messages.map(msg => ({
+      sender: {
+        name: msg.sender.name,
+        profileImage: msg.sender.profileImage,
+      },
+      message: msg.message,
+      timestamp: msg.timestamp
+    }));
 
-    res.status(200).json({ messages: user.messages });
+    res.status(200).json({ messages });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+  
 
 

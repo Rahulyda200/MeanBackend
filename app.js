@@ -23,30 +23,18 @@ const userRouter = require("./userRouter/userRouter");
 app.use(cors());
 app.use(express.json());
 
-// const logMessageToFile = (messageData) => {
-//   const logEntry = `${new Date().toISOString()} - ${messageData.sender}: ${
-//     messageData.message
-//   }\n`;
-//   const logFilePath = path.join(__dirname, "messages.txt");
-
-//   fs.appendFile(logFilePath, logEntry, (err) => {
-//     if (err) {
-//       console.error("Failed to write message to file:", err);
-//     }
-//   });
-// };
 const logMessageToFile = (messageData) => {
   const now = new Date();
-  const formattedDate = now.toLocaleString('en-IN', { 
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true 
+  const formattedDate = now.toLocaleString("en-IN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
   });
 
-  const logEntry = `${formattedDate} - ${messageData.sender}: ${messageData.message}\n`;
+  const logEntry = `${formattedDate} - ${messageData.sender}: ${messageData.type === "text" ? messageData.content : "[Image message]"}\n`;
   const logFilePath = path.join(__dirname, "messages.txt");
 
   fs.appendFile(logFilePath, logEntry, (err) => {
@@ -59,6 +47,7 @@ const logMessageToFile = (messageData) => {
 dbs();
 app.use("/api/users", userRouter);
 
+// Endpoint to retrieve message logs
 app.get("/api/messages", (req, res) => {
   const logFilePath = path.join(__dirname, "messages.txt");
 
@@ -74,7 +63,7 @@ app.get("/api/messages", (req, res) => {
         const parts = line.split(": ");
         return {
           sender: parts[0],
-          message: parts[1],
+          content: parts[1],
         };
       });
 
@@ -90,30 +79,29 @@ io.on("connection", (socket) => {
     console.log(`${userId} has joined their room.`);
   });
 
+  // Event for handling text and image messages
   socket.on("chat message", (data) => {
-    const { sender, content, receiver, roomId } = data;
-
-    console.log(`Message from ${sender}: ${content} to ${receiver}:${content}`);
-
+    const { sender, content, receiver, roomId, type } = data;
+  
+    console.log(`Message from ${sender}: ${type === "text" ? content : "[Image message]"} to ${receiver}`);
+  
     if (!sender || !roomId) {
       console.error("Message must contain sender and roomId");
       return;
     }
-
-    logMessageToFile({ sender, message: content });
-
-    console.log(`Emitting to room: ${roomId}`);
-    // io.to(roomId).emit("chat message", {
-    //   from: sender,
-    //   message: content,
-    // });
+  
+    logMessageToFile({ sender, content, type });
+  
     io.to(roomId).emit("chat message", {
-      sender: sender,
-      content: content,
-      receiver: receiver
+      sender,
+      content: type === "image" ? `data:image/jpeg;base64,${content}` : content, // Send as Base64 if image
+      receiver,
+      type,
+      status: "sent",
     });
-    
   });
+  
+  
 
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);
