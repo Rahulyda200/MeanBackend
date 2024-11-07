@@ -46,7 +46,7 @@ const logMessageToFile = (messageData) => {
 
 dbs();
 app.use("/api/users", userRouter);
-
+    
 // Endpoint to retrieve message logs
 app.get("/api/messages", (req, res) => {
   const logFilePath = path.join(__dirname, "messages.txt");
@@ -82,24 +82,20 @@ io.on("connection", (socket) => {
   // Event for handling text and image messages
   socket.on("chat message", (data) => {
     const { sender, content, receiver, roomId, type } = data;
-  
     console.log(`Message from ${sender}: ${type === "text" ? content : "[Image message]"} to ${receiver}`);
-  
-    if (!sender || !roomId) {
-      console.error("Message must contain sender and roomId");
-      return;
-    }
-  
-    logMessageToFile({ sender, content, type });
   
     io.to(roomId).emit("chat message", {
       sender,
-      content: type === "image" ? `data:image/jpeg;base64,${content}` : content, // Send as Base64 if image
+      content,
       receiver,
-      type,
-      status: "sent",
+      roomId,
+      timestamp: new Date(),
+      type
     });
+  
+    logMessageToFile(data); 
   });
+  
   
   
 
